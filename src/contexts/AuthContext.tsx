@@ -34,15 +34,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
+      console.log('Attempting login with username:', username);
+      
       // Check credentials against admin_users table
       const { data, error } = await supabase
         .from('admin_users')
         .select('*')
         .eq('username', username)
-        .eq('email', 'admin')
-        .single();
+        .maybeSingle();
 
-      if (error || !data) {
+      console.log('Query result:', data, error);
+
+      if (error) {
+        console.error('Database error:', error);
+        return false;
+      }
+
+      if (!data) {
+        console.log('No user found with username:', username);
         return false;
       }
 
@@ -50,10 +59,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (password === 'tiger@1234') {
         localStorage.setItem('admin_session', JSON.stringify(data));
         setIsAdminLoggedIn(true);
+        console.log('Login successful');
         return true;
+      } else {
+        console.log('Invalid password');
+        return false;
       }
       
-      return false;
     } catch (error) {
       console.error('Login error:', error);
       return false;

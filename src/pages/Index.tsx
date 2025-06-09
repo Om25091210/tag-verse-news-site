@@ -14,8 +14,8 @@ interface Article {
   title: string;
   description: string;
   content: string;
-  image_url: string;
-  published_at: string;
+  imageUrl: string;
+  publishedAt: string;
   tags: string[];
 }
 
@@ -67,8 +67,8 @@ const Index = () => {
         title: article.title,
         description: article.description,
         content: article.content,
-        image_url: article.image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1000&q=80',
-        published_at: article.published_at,
+        imageUrl: article.image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1000&q=80',
+        publishedAt: article.published_at,
         tags: article.article_tags?.map(at => at.tags?.name).filter(Boolean) || []
       }));
 
