@@ -36,7 +36,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log('Attempting login with username:', username);
       
-      // Check credentials against admin_users table
+      // First, let's check if any admin users exist at all
+      const { data: allUsers, error: allUsersError } = await supabase
+        .from('admin_users')
+        .select('*');
+
+      console.log('All admin users in database:', allUsers, allUsersError);
+
+      // If no users exist, create the default admin user
+      if (!allUsers || allUsers.length === 0) {
+        console.log('No admin users found, creating default admin user...');
+        
+        const { data: newUser, error: insertError } = await supabase
+          .from('admin_users')
+          .insert([
+            {
+              username: 'admin',
+              email: 'admin@example.com',
+              password_hash: 'tiger@1234' // For simplicity, storing plain text password
+            }
+          ])
+          .select()
+          .single();
+
+        console.log('Created new admin user:', newUser, insertError);
+        
+        if (insertError) {
+          console.error('Error creating admin user:', insertError);
+          return false;
+        }
+      }
+
+      // Now check credentials against admin_users table
       const { data, error } = await supabase
         .from('admin_users')
         .select('*')
