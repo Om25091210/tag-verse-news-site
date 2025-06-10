@@ -119,8 +119,11 @@ const Index = () => {
     setSelectedNav(tag);
   };
 
+  const latestArticle = filteredArticles[0];
+  const olderArticles = filteredArticles.slice(1);
+
   if (selectedArticle) {
-    return <ArticleDetail article={selectedArticle} onBack={handleBack} />;
+    return <ArticleDetail article={selectedArticle} onBack={handleBack} allArticles={articles} onArticleClick={handleArticleClick} />;
   }
 
   return (
@@ -144,14 +147,36 @@ const Index = () => {
           selectedTag={selectedTag}
           onTagSelect={handleTagSelect}
         />
-        
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading articles...</p>
           </div>
         ) : filteredArticles.length > 0 ? (
-          <NewsGrid articles={filteredArticles} onArticleClick={handleArticleClick} />
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex-1">
+              <NewsGrid articles={filteredArticles} onArticleClick={handleArticleClick} />
+            </div>
+            {olderArticles.length > 0 && (
+              <aside className="w-full lg:w-80 flex-shrink-0">
+                <h2 className="text-lg font-semibold mb-4">Older News</h2>
+                <div className="flex flex-col gap-4">
+                  {olderArticles.map(article => (
+                    <div key={article.id} className="cursor-pointer" onClick={() => handleArticleClick(article)}>
+                      <div className="flex gap-3 items-center bg-white rounded-lg shadow p-2 hover:bg-gray-50 transition">
+                        <img src={article.imageUrl} alt={article.title} className="w-20 h-14 object-cover rounded-md flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-muted-foreground truncate mb-1">{article.tags[0]}</div>
+                          <div className="font-medium text-sm truncate">{article.title}</div>
+                          <div className="text-xs text-gray-400 truncate">{new Date(article.publishedAt).toLocaleDateString()}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </aside>
+            )}
+          </div>
         ) : (
           <div className="text-center py-12">
             <p className="text-gray-600">No articles found for the selected tag.</p>
