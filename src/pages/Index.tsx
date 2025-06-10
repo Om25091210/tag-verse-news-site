@@ -128,20 +128,20 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header searchValue={search} onSearchChange={setSearch} onNavSelect={handleNavSelect} selectedNav={selectedNav} />
+      <Header onNavSelect={handleNavSelect} selectedNav={selectedNav} />
       
-      <div className="fixed top-4 right-4 z-50">
-        <Link to="/admin">
-          <Button variant="outline" className="flex items-center space-x-2 bg-white shadow-lg">
-            <Shield className="w-4 h-4" />
-            <span>Admin Login</span>
-          </Button>
-        </Link>
-      </div>
-
       <Carousel images={articles.map(article => article.imageUrl)} className="mt-0" />
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div className="mb-6 flex justify-center">
+          <input
+            type="text"
+            placeholder="Search news..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full max-w-md px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow"
+          />
+        </div>
         <TagFilter 
           tags={tags.map(tag => tag.name)}
           selectedTag={selectedTag}
