@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface TagFilterProps {
@@ -13,14 +12,14 @@ const TagFilter = ({ tags, selectedTag, onTagSelect }: TagFilterProps) => {
       <h3 className="text-lg font-semibold mb-4 text-foreground">Filter by Category</h3>
       <div className="flex flex-wrap gap-2">
         <button
-          onClick={() => onTagSelect(null)}
+          onClick={() => onTagSelect('All')}
           className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-            selectedTag === null
+            selectedTag === 'All'
               ? 'bg-primary text-primary-foreground'
               : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
           }`}
         >
-          All News
+          All
         </button>
         {tags.map((tag) => (
           <button

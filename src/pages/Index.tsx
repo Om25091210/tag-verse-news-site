@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
@@ -31,6 +30,8 @@ const Index = () => {
   const [selectedTag, setSelectedTag] = useState<string>('All');
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [selectedNav, setSelectedNav] = useState<string>('All');
 
   useEffect(() => {
     fetchArticlesAndTags();
@@ -90,9 +91,14 @@ const Index = () => {
     }
   };
 
-  const filteredArticles = selectedTag === 'All' 
-    ? articles 
-    : articles.filter(article => article.tags.includes(selectedTag));
+  const filteredArticles = articles.filter(article => {
+    const matchesTag = selectedTag === 'All' || article.tags.includes(selectedTag);
+    const matchesSearch =
+      article.title.toLowerCase().includes(search.toLowerCase()) ||
+      article.description.toLowerCase().includes(search.toLowerCase()) ||
+      article.content.toLowerCase().includes(search.toLowerCase());
+    return matchesTag && matchesSearch;
+  });
 
   const handleArticleClick = (article: Article) => {
     setSelectedArticle(article);
@@ -102,13 +108,23 @@ const Index = () => {
     setSelectedArticle(null);
   };
 
+  const handleNavSelect = (category: string) => {
+    setSelectedNav(category);
+    setSelectedTag(category);
+  };
+
+  const handleTagSelect = (tag: string) => {
+    setSelectedTag(tag);
+    setSelectedNav(tag);
+  };
+
   if (selectedArticle) {
     return <ArticleDetail article={selectedArticle} onBack={handleBack} />;
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header searchValue={search} onSearchChange={setSearch} onNavSelect={handleNavSelect} selectedNav={selectedNav} />
       
       <div className="fixed top-4 right-4 z-50">
         <Link to="/admin">
@@ -121,9 +137,9 @@ const Index = () => {
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <TagFilter 
-          tags={['All', ...tags.map(tag => tag.name)]}
+          tags={tags.map(tag => tag.name)}
           selectedTag={selectedTag}
-          onTagSelect={setSelectedTag}
+          onTagSelect={handleTagSelect}
         />
         
         {loading ? (

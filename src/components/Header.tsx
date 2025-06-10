@@ -1,8 +1,22 @@
-
 import React from 'react';
 import { Search, Menu } from 'lucide-react';
 
-const Header = () => {
+interface HeaderProps {
+  searchValue: string;
+  onSearchChange: (value: string) => void;
+  onNavSelect: (category: string) => void;
+  selectedNav: string;
+}
+
+const NAV_CATEGORIES = [
+  { label: 'Home', value: 'All' },
+  { label: 'World', value: 'World' },
+  { label: 'Technology', value: 'Technology' },
+  { label: 'Sports', value: 'Sports' },
+  { label: 'Business', value: 'Business' },
+];
+
+const Header = ({ searchValue, onSearchChange, onNavSelect, selectedNav }: HeaderProps) => {
   return (
     <header className="bg-background border-b border-border sticky top-0 z-50 backdrop-blur-md bg-background/95">
       <div className="container mx-auto px-4 py-4">
@@ -11,16 +25,8 @@ const Header = () => {
             <button className="md:hidden">
               <Menu className="w-6 h-6" />
             </button>
-            <h1 className="text-2xl font-bold text-primary">NewsHub</h1>
+            <h1 className="text-2xl font-bold text-primary">Highway News</h1>
           </div>
-          
-          <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">Home</a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">World</a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">Technology</a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">Sports</a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">Business</a>
-          </nav>
           
           <div className="flex items-center space-x-4">
             <div className="relative">
@@ -28,6 +34,8 @@ const Header = () => {
               <input 
                 type="text" 
                 placeholder="Search news..."
+                value={searchValue}
+                onChange={e => onSearchChange(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>

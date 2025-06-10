@@ -1,6 +1,6 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import bcrypt from 'bcryptjs';
 
 interface AuthContextType {
   isAdminLoggedIn: boolean;
@@ -86,8 +86,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return false;
       }
 
-      // Simple password check (in production, use proper password hashing)
-      if (password === 'tiger@1234') {
+      // Compare entered password with stored hash using bcryptjs if hash, otherwise plain text
+      let isPasswordValid = false;
+      const hash = data.password_hash;
+      if (typeof hash === 'string' && (hash.startsWith('$2a$') || hash.startsWith('$2b$') || hash.startsWith('$2y$'))) {
+        isPasswordValid = await bcrypt.compare(password, hash);
+      } else {
+        isPasswordValid = password === hash;
+      }
+      if (isPasswordValid) {
         localStorage.setItem('admin_session', JSON.stringify(data));
         setIsAdminLoggedIn(true);
         console.log('Login successful');
