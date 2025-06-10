@@ -7,6 +7,7 @@ import ArticleDetail from '@/components/ArticleDetail';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Shield } from 'lucide-react';
+import Carousel from '@/components/Carousel';
 
 interface Article {
   id: string;
@@ -134,6 +135,8 @@ const Index = () => {
           </Button>
         </Link>
       </div>
+
+      <Carousel images={articles.map(article => article.imageUrl)} />
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <TagFilter 
