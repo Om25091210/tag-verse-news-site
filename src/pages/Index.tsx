@@ -136,7 +136,7 @@ const Index = () => {
         </Link>
       </div>
 
-      <Carousel images={articles.map(article => article.imageUrl)} />
+      <Carousel images={articles.map(article => article.imageUrl)} className="mt-0" />
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <TagFilter 

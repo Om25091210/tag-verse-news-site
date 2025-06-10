@@ -25,6 +25,7 @@ const Header = ({ searchValue, onSearchChange, onNavSelect, selectedNav }: Heade
             <button className="md:hidden">
               <Menu className="w-6 h-6" />
             </button>
+            <img src="/logo.png" alt="Highway News Logo" className="h-10 w-10 rounded-full shadow" />
             <h1 className="text-2xl font-bold text-primary">Highway News</h1>
           </div>
           

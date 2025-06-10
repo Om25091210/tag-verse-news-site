@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 
 interface CarouselProps {
   images: string[];
+  className?: string;
 }
 
-const Carousel: React.FC<CarouselProps> = ({ images }) => {
+const Carousel: React.FC<CarouselProps> = ({ images, className = '' }) => {
   const [current, setCurrent] = useState(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const delay = 3000; // 3 seconds
@@ -23,8 +24,8 @@ const Carousel: React.FC<CarouselProps> = ({ images }) => {
   if (!images.length) return null;
 
   return (
-    <div className="w-full mt-6 mb-8 relative overflow-hidden rounded-lg shadow-lg">
-      <div className="relative h-48 md:h-64 lg:h-72 xl:h-80">
+    <div className={`w-full mb-2 relative overflow-hidden shadow-lg ${className}`}>
+      <div className="relative h-64 md:h-80 lg:h-[28rem] xl:h-[32rem]">
         {images.map((img, idx) => (
           <img
             key={idx}
