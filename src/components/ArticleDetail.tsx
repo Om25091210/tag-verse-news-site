@@ -33,6 +33,14 @@ const ArticleDetail = ({ article, onBack, allArticles, onArticleClick }: Article
     });
   };
 
+  const linkify = (text: string) => {
+    return text
+      .replace(/(https?:\/\/[^\s]+)/g, url =>
+        `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">${url}</a>`
+      )
+      .replace(/\n/g, '<br />');
+  };
+
   // Find related articles (share at least one tag, not the current article)
   const relatedArticles = allArticles.filter(a =>
     a.id !== article.id && a.tags.some(tag => article.tags.includes(tag))
@@ -95,16 +103,16 @@ const ArticleDetail = ({ article, onBack, allArticles, onArticleClick }: Article
                   )}
                 </div>
                 <div className="text-xl text-muted-foreground leading-relaxed mb-8">
-                  {article.description}
+                  <span dangerouslySetInnerHTML={{ __html: linkify(article.description) }} />
                 </div>
-                <div className="text-foreground leading-relaxed mb-8">
-                  {article.content || `
+                <div className="text-foreground leading-relaxed mb-8" style={{ whiteSpace: 'pre-line' }}>
+                  <span dangerouslySetInnerHTML={{ __html: linkify(article.content || `
                     This is where the full article content would be displayed. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 
                     Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
                     Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
-                  `}
+                  `) }} />
                 </div>
                 <div className="border-t border-border pt-6">
                   <h3 className="text-lg font-semibold mb-4 text-foreground">Tags</h3>
