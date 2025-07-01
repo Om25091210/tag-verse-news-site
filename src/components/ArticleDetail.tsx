@@ -30,49 +30,126 @@ const ArticleDetail = ({ article: propArticle, onBack, allArticles = [], onArtic
   const [article, setArticle] = React.useState<Article | null>(propArticle || null);
   const [loading, setLoading] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
   const shareUrl = typeof window !== 'undefined' && article ? `${window.location.origin}/article/${article.id}` : '';
+  const [allArticlesState, setAllArticlesState] = React.useState<Article[]>(allArticles || []);
 
   React.useEffect(() => {
     if (!article && id) {
       setLoading(true);
+      setError(null);
       (async () => {
-        // Fetch article by id
-        const { data: articleData, error } = await supabase
-          .from('articles')
-          .select(`
-            id, title, description, content, published_at, image_url,
-            article_tags ( tags ( id, name, color ) )
-          `)
-          .eq('id', id)
-          .single();
-        if (error || !articleData) {
+        try {
+          // Fetch article by id
+          const { data: articleData, error } = await supabase
+            .from('articles')
+            .select(`
+              id, title, description, content, published_at,
+              article_tags ( tags ( id, name, color ) )
+            `)
+            .eq('id', id)
+            .single();
+          if (error || !articleData) {
+            setError('Article not found.');
+            if (error) console.error('Supabase error:', error);
+            setLoading(false);
+            return;
+          }
+          // Fetch media
+          const { data: mediaData, error: mediaError } = await supabase
+            .from('article_media' as any)
+            .select('media_url, media_type, display_order')
+            .eq('article_id', id)
+            .order('display_order');
+          if (mediaError) {
+            setError('Failed to load article media.');
+            console.error('Supabase media error:', mediaError);
+            setLoading(false);
+            return;
+          }
+          function isMediaArray(arr: any): arr is { media_url: string; media_type: string; display_order: number }[] {
+            return Array.isArray(arr) && arr.every(m => m && typeof m.media_url === 'string');
+          }
+          setArticle({
+            id: articleData.id,
+            title: articleData.title,
+            description: articleData.description,
+            content: articleData.content,
+            imageUrl: isMediaArray(mediaData) ? mediaData.find((m: any) => m.media_type === 'image')?.media_url ?? '' : '',
+            publishedAt: articleData.published_at,
+            tags: articleData.article_tags?.map((at: any) => at.tags?.name).filter(Boolean) || [],
+            media: isMediaArray(mediaData) ? mediaData.map((m: any) => ({
+              media_url: m.media_url,
+              media_type: m.media_type,
+              display_order: m.display_order,
+            })) : [],
+          });
           setLoading(false);
-          return;
+        } catch (err) {
+          setError('An unexpected error occurred.');
+          console.error('Unexpected error:', err);
+          setLoading(false);
         }
-        // Fetch media
-        const { data: mediaData } = await supabase
-          .from('article_media' as any)
-          .select('media_url, media_type, display_order')
-          .eq('article_id', id)
-          .order('display_order');
-        setArticle({
-          id: articleData.id,
-          title: articleData.title,
-          description: articleData.description,
-          content: articleData.content,
-          imageUrl: articleData.image_url || '',
-          publishedAt: articleData.published_at,
-          tags: articleData.article_tags?.map((at: any) => at.tags?.name).filter(Boolean) || [],
-          media: (mediaData || []).map((m: any) => ({
-            media_url: m.media_url,
-            media_type: m.media_type,
-            display_order: m.display_order,
-          })),
-        });
-        setLoading(false);
       })();
     }
   }, [id, article]);
+
+  // Fetch all articles if not provided
+  React.useEffect(() => {
+    if (!allArticles || allArticles.length === 0) {
+      (async () => {
+        const { data: articlesData, error } = await supabase
+          .from('articles')
+          .select(`
+            id, title, description, content, published_at,
+            article_tags ( tags ( id, name, color ) )
+          `)
+          .order('published_at', { ascending: false });
+        if (error) {
+          console.error('Failed to fetch all articles:', error);
+          return;
+        }
+        // Fetch all media for all articles
+        const { data: mediaData, error: mediaError } = await supabase
+          .from('article_media' as any)
+          .select('article_id, media_url, media_type, display_order');
+        if (mediaError) {
+          console.error('Failed to fetch all article media:', mediaError);
+          return;
+        }
+        function isMediaRecord(m: any): m is { article_id: string; media_url: string; media_type: string; display_order: number } {
+          return m && typeof m.article_id === 'string' && typeof m.media_url === 'string' && typeof m.media_type === 'string' && typeof m.display_order === 'number';
+        }
+        const filteredMediaData = ((mediaData || []) as unknown[]).filter(isMediaRecord) as { article_id: string; media_url: string; media_type: string; display_order: number }[];
+        const transformedArticles: Article[] = (articlesData || []).map(article => {
+          const media = filteredMediaData
+            .filter(m => m.article_id === article.id)
+            .map(m => {
+              if (m.media_type === 'image' || m.media_type === 'video') {
+                return {
+                  media_url: m.media_url,
+                  media_type: m.media_type as 'image' | 'video',
+                  display_order: m.display_order
+                };
+              }
+              return null;
+            })
+            .filter((m): m is { media_url: string; media_type: 'image' | 'video'; display_order: number } => m !== null);
+          return {
+            id: article.id,
+            title: article.title,
+            description: article.description,
+            content: article.content,
+            imageUrl: media.find(m => m.media_type === 'image')?.media_url ?? '',
+            publishedAt: article.published_at,
+            tags: article.article_tags?.map((at: any) => at.tags?.name).filter(Boolean) || [],
+            media,
+          };
+        });
+        setAllArticlesState(transformedArticles);
+      })();
+    }
+  }, [allArticles]);
 
   const handleShare = async () => {
     if (shareUrl) {
@@ -82,8 +159,14 @@ const ArticleDetail = ({ article: propArticle, onBack, allArticles = [], onArtic
     }
   };
 
-  if (loading || !article) {
+  if (loading) {
     return <div className="text-center py-12">Loading article...</div>;
+  }
+  if (error) {
+    return <div className="text-center py-12 text-red-600">{error}</div>;
+  }
+  if (!article) {
+    return <div className="text-center py-12 text-red-600">Article not found.</div>;
   }
 
   const getFormattedDate = (dateString: string) => {
@@ -106,7 +189,7 @@ const ArticleDetail = ({ article: propArticle, onBack, allArticles = [], onArtic
   };
 
   // Find related articles (share at least one tag, not the current article)
-  const relatedArticles = allArticles.filter(a =>
+  const relatedArticles = allArticlesState.filter(a =>
     a.id !== article.id && a.tags.some(tag => article.tags.includes(tag))
   );
 
@@ -198,7 +281,7 @@ const ArticleDetail = ({ article: propArticle, onBack, allArticles = [], onArtic
                   {/* All News Section */}
                   <div className="mt-8">
                     <h3 className="text-lg font-semibold mb-4 text-foreground">All News</h3>
-                    <NewsGrid articles={allArticles} onArticleClick={onArticleClick} />
+                    <NewsGrid articles={allArticlesState} onArticleClick={onArticleClick} />
                   </div>
                 </div>
               </div>
@@ -210,7 +293,7 @@ const ArticleDetail = ({ article: propArticle, onBack, allArticles = [], onArtic
               <h2 className="text-lg font-semibold mb-4">Related News</h2>
               <div className="flex flex-col gap-4">
                 {relatedArticles.map(article => (
-                  <div key={article.id} className="cursor-pointer" onClick={() => onArticleClick(article)}>
+                  <div key={article.id} className="cursor-pointer" onClick={() => onArticleClick ? onArticleClick(article) : navigate(`/article/${article.id}`)}>
                     <div className="flex gap-3 items-center bg-white rounded-lg shadow p-2 hover:bg-gray-50 transition">
                       <img src={article.imageUrl} alt={article.title} className="w-20 h-14 object-cover rounded-md flex-shrink-0" />
                       <div className="flex-1 min-w-0">

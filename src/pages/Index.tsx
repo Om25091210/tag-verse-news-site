@@ -5,7 +5,7 @@ import NewsGrid from '@/components/NewsGrid';
 import TagFilter from '@/components/TagFilter';
 import ArticleDetail from '@/components/ArticleDetail';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import Carousel from '@/components/Carousel';
 
@@ -30,10 +30,10 @@ const Index = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTag, setSelectedTag] = useState<string>('All');
-  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedNav, setSelectedNav] = useState<string>('All');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchArticlesAndTags();
@@ -132,11 +132,11 @@ const Index = () => {
   });
 
   const handleArticleClick = (article: Article) => {
-    setSelectedArticle(article);
+    navigate(`/article/${article.id}`);
   };
 
   const handleBack = () => {
-    setSelectedArticle(null);
+    // This function is no longer used
   };
 
   const handleNavSelect = (category: string) => {
@@ -151,10 +151,6 @@ const Index = () => {
 
   const latestArticle = filteredArticles[0];
   const olderArticles = filteredArticles.slice(1);
-
-  if (selectedArticle) {
-    return <ArticleDetail article={selectedArticle} onBack={handleBack} allArticles={articles} onArticleClick={handleArticleClick} />;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
