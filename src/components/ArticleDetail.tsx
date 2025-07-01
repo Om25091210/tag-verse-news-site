@@ -1,6 +1,10 @@
 import React from 'react';
-import { ArrowLeft, Tag, Calendar, User } from 'lucide-react';
+import { ArrowLeft, Tag, Calendar, User, Share2 } from 'lucide-react';
 import NewsGrid from './NewsGrid';
+import Carousel from './Carousel';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from './ui/button';
 
 interface Article {
   id: string;
@@ -10,7 +14,6 @@ interface Article {
   publishedAt: string;
   tags: string[];
   content?: string;
-  author?: string;
   media?: { media_url: string; media_type: 'image' | 'video'; display_order: number }[];
 }
 
@@ -21,7 +24,68 @@ interface ArticleDetailProps {
   onArticleClick: (article: Article) => void;
 }
 
-const ArticleDetail = ({ article, onBack, allArticles, onArticleClick }: ArticleDetailProps) => {
+const ArticleDetail = ({ article: propArticle, onBack, allArticles = [], onArticleClick }: Partial<ArticleDetailProps>) => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [article, setArticle] = React.useState<Article | null>(propArticle || null);
+  const [loading, setLoading] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
+  const shareUrl = typeof window !== 'undefined' && article ? `${window.location.origin}/article/${article.id}` : '';
+
+  React.useEffect(() => {
+    if (!article && id) {
+      setLoading(true);
+      (async () => {
+        // Fetch article by id
+        const { data: articleData, error } = await supabase
+          .from('articles')
+          .select(`
+            id, title, description, content, published_at, image_url,
+            article_tags ( tags ( id, name, color ) )
+          `)
+          .eq('id', id)
+          .single();
+        if (error || !articleData) {
+          setLoading(false);
+          return;
+        }
+        // Fetch media
+        const { data: mediaData } = await supabase
+          .from('article_media' as any)
+          .select('media_url, media_type, display_order')
+          .eq('article_id', id)
+          .order('display_order');
+        setArticle({
+          id: articleData.id,
+          title: articleData.title,
+          description: articleData.description,
+          content: articleData.content,
+          imageUrl: articleData.image_url || '',
+          publishedAt: articleData.published_at,
+          tags: articleData.article_tags?.map((at: any) => at.tags?.name).filter(Boolean) || [],
+          media: (mediaData || []).map((m: any) => ({
+            media_url: m.media_url,
+            media_type: m.media_type,
+            display_order: m.display_order,
+          })),
+        });
+        setLoading(false);
+      })();
+    }
+  }, [id, article]);
+
+  const handleShare = async () => {
+    if (shareUrl) {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+  };
+
+  if (loading || !article) {
+    return <div className="text-center py-12">Loading article...</div>;
+  }
+
   const getFormattedDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -50,7 +114,7 @@ const ArticleDetail = ({ article, onBack, allArticles, onArticleClick }: Article
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <button
-          onClick={onBack}
+          onClick={() => (onBack ? onBack() : navigate(-1))}
           className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors mb-8"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -58,10 +122,16 @@ const ArticleDetail = ({ article, onBack, allArticles, onArticleClick }: Article
         </button>
         {/* Media Gallery */}
         {article.media && article.media.length > 0 ? (
-          <div className="flex gap-4 overflow-x-auto mb-8 justify-center items-center">
+          <div className="mb-8 flex flex-col gap-6 justify-center items-center w-full max-w-2xl mx-auto">
             {article.media.map((media, idx) =>
               media.media_type === 'image' ? (
-                <img key={idx} src={media.media_url} alt={`media-${idx}`} className="h-96 rounded-lg object-cover" style={{ maxWidth: '100%' }} />
+                <img
+                  key={idx}
+                  src={media.media_url}
+                  alt={`media-${idx}`}
+                  className="w-full h-96 rounded-lg object-cover"
+                  style={{ maxWidth: '100%' }}
+                />
               ) : (
                 <video
                   key={idx}
@@ -70,7 +140,7 @@ const ArticleDetail = ({ article, onBack, allArticles, onArticleClick }: Article
                   autoPlay
                   muted
                   loop
-                  className="h-96 rounded-lg object-cover"
+                  className="w-full h-96 rounded-lg object-cover"
                   style={{ maxWidth: '100%' }}
                 />
               )
@@ -87,20 +157,18 @@ const ArticleDetail = ({ article, onBack, allArticles, onArticleClick }: Article
           <div className="flex-1">
             <article className="max-w-4xl mx-auto">
               <div className="prose prose-lg max-w-none">
-                <h1 className="text-4xl font-bold text-foreground mb-6 leading-tight">
+                <h1 className="text-4xl font-bold text-foreground mb-6 leading-tight flex items-center gap-3">
                   {article.title}
+                  <Button size="icon" variant="ghost" onClick={handleShare} title="Share this article">
+                    <Share2 className="w-5 h-5" />
+                  </Button>
+                  {copied && <span className="text-xs text-green-600 ml-2">Link copied!</span>}
                 </h1>
                 <div className="flex flex-wrap items-center gap-6 mb-8 text-muted-foreground">
                   <div className="flex items-center space-x-2">
                     <Calendar className="w-4 h-4" />
                     <span>{getFormattedDate(article.publishedAt)}</span>
                   </div>
-                  {article.author && (
-                    <div className="flex items-center space-x-2">
-                      <User className="w-4 h-4" />
-                      <span>{article.author}</span>
-                    </div>
-                  )}
                 </div>
                 <div className="text-xl text-muted-foreground leading-relaxed mb-8">
                   <span dangerouslySetInnerHTML={{ __html: linkify(article.description) }} />

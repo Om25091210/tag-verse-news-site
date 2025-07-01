@@ -169,6 +169,7 @@ const Index = () => {
           .filter((item): item is { url: string; type: 'image' | 'video' } => item !== null)
         }
         className="mt-0" 
+        orientation="vertical"
       />
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
