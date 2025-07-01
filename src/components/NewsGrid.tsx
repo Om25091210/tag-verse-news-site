@@ -1,4 +1,3 @@
-
 import React from 'react';
 import NewsCard from './NewsCard';
 
@@ -9,6 +8,7 @@ interface Article {
   imageUrl: string;
   publishedAt: string;
   tags: string[];
+  media?: { media_url: string; media_type: 'image' | 'video'; display_order: number }[];
 }
 
 interface NewsGridProps {
@@ -29,6 +29,7 @@ const NewsGrid = ({ articles, onArticleClick }: NewsGridProps) => {
           publishedAt={article.publishedAt}
           tags={article.tags}
           onClick={() => onArticleClick(article)}
+          media={article.media}
         />
       ))}
     </div>

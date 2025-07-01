@@ -17,6 +17,7 @@ interface Article {
   imageUrl: string;
   publishedAt: string;
   tags: string[];
+  media?: { media_url: string; media_type: 'image' | 'video'; display_order: number }[];
 }
 
 interface Tag {
@@ -48,7 +49,6 @@ const Index = () => {
           title,
           description,
           content,
-          image_url,
           published_at,
           article_tags (
             tags (
@@ -63,16 +63,46 @@ const Index = () => {
 
       if (articlesError) throw articlesError;
 
-      // Transform the data to match our interface
-      const transformedArticles: Article[] = (articlesData || []).map(article => ({
-        id: article.id,
-        title: article.title,
-        description: article.description,
-        content: article.content,
-        imageUrl: article.image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1000&q=80',
-        publishedAt: article.published_at,
-        tags: article.article_tags?.map(at => at.tags?.name).filter(Boolean) || []
-      }));
+      // Debug: log the raw articlesData to inspect structure
+      console.log('articlesData:', articlesData);
+
+      // Fetch all media for all articles
+      const { data: mediaData, error: mediaError } = await supabase
+        .from('article_media' as any)
+        .select('article_id, media_url, media_type, display_order');
+
+      if (mediaError) throw mediaError;
+
+      // Attach media to each article
+      function isMediaRecord(m: any): m is { article_id: string; media_url: string; media_type: string; display_order: number } {
+        return m && typeof m.article_id === 'string' && typeof m.media_url === 'string' && typeof m.media_type === 'string' && typeof m.display_order === 'number';
+      }
+      const filteredMediaData = ((mediaData || []) as unknown[]).filter(isMediaRecord) as { article_id: string; media_url: string; media_type: string; display_order: number }[];
+      const transformedArticles: Article[] = (articlesData || []).map(article => {
+        const media = filteredMediaData
+          .filter(m => m.article_id === article.id)
+          .map(m => {
+            if (m.media_type === 'image' || m.media_type === 'video') {
+              return {
+                media_url: m.media_url,
+                media_type: m.media_type as 'image' | 'video',
+                display_order: m.display_order
+              };
+            }
+            return null;
+          })
+          .filter((m): m is { media_url: string; media_type: 'image' | 'video'; display_order: number } => m !== null);
+        return {
+          id: article.id,
+          title: article.title,
+          description: article.description,
+          content: article.content,
+          imageUrl: media.find(m => m.media_type === 'image')?.media_url ?? '',
+          publishedAt: article.published_at,
+          tags: article.article_tags?.map(at => at.tags?.name).filter(Boolean) || [],
+          media,
+        };
+      });
 
       setArticles(transformedArticles);
 
@@ -130,7 +160,16 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50">
       <Header onNavSelect={handleNavSelect} selectedNav={selectedNav} />
       
-      <Carousel images={articles.map(article => article.imageUrl)} className="mt-0" />
+      <Carousel 
+        media={articles
+          .map(article => article.media && article.media.length > 0 ? {
+            url: article.media[0].media_url,
+            type: article.media[0].media_type
+          } : null)
+          .filter((item): item is { url: string; type: 'image' | 'video' } => item !== null)
+        }
+        className="mt-0" 
+      />
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-6 flex justify-center">
@@ -164,7 +203,15 @@ const Index = () => {
                   {olderArticles.map(article => (
                     <div key={article.id} className="cursor-pointer" onClick={() => handleArticleClick(article)}>
                       <div className="flex gap-3 items-center bg-white rounded-lg shadow p-2 hover:bg-gray-50 transition">
-                        <img src={article.imageUrl} alt={article.title} className="w-20 h-14 object-cover rounded-md flex-shrink-0" />
+                        {article.media && article.media.length > 0 ? (
+                          article.media[0].media_type === 'image' ? (
+                            <img src={article.media[0].media_url} alt={article.title} className="w-20 h-14 object-cover rounded-md flex-shrink-0" />
+                          ) : (
+                            <video src={article.media[0].media_url} controls className="w-20 h-14 object-cover rounded-md flex-shrink-0" />
+                          )
+                        ) : (
+                          <img src={article.imageUrl} alt={article.title} className="w-20 h-14 object-cover rounded-md flex-shrink-0" />
+                        )}
                         <div className="flex-1 min-w-0">
                           <div className="text-xs text-muted-foreground truncate mb-1">{article.tags[0]}</div>
                           <div className="font-medium text-sm truncate">{article.title}</div>

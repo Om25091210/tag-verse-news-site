@@ -11,6 +11,7 @@ interface Article {
   tags: string[];
   content?: string;
   author?: string;
+  media?: { media_url: string; media_type: 'image' | 'video'; display_order: number }[];
 }
 
 interface ArticleDetailProps {
@@ -47,11 +48,33 @@ const ArticleDetail = ({ article, onBack, allArticles, onArticleClick }: Article
           <ArrowLeft className="w-5 h-5" />
           <span>Back to News</span>
         </button>
-        <img
-          src={article.imageUrl}
-          alt={article.title}
-          className="w-full h-96 object-cover rounded-lg shadow-lg mb-8"
-        />
+        {/* Media Gallery */}
+        {article.media && article.media.length > 0 ? (
+          <div className="flex gap-4 overflow-x-auto mb-8 justify-center items-center">
+            {article.media.map((media, idx) =>
+              media.media_type === 'image' ? (
+                <img key={idx} src={media.media_url} alt={`media-${idx}`} className="h-96 rounded-lg object-cover" style={{ maxWidth: '100%' }} />
+              ) : (
+                <video
+                  key={idx}
+                  src={media.media_url}
+                  controls
+                  autoPlay
+                  muted
+                  loop
+                  className="h-96 rounded-lg object-cover"
+                  style={{ maxWidth: '100%' }}
+                />
+              )
+            )}
+          </div>
+        ) : (
+          <img
+            src={article.imageUrl}
+            alt={article.title}
+            className="w-full h-96 object-cover rounded-lg shadow-lg mb-8"
+          />
+        )}
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
             <article className="max-w-4xl mx-auto">
