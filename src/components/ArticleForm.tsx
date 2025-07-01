@@ -50,6 +50,7 @@ const ArticleForm = ({ article, onClose }: ArticleFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
     fetchTags();
@@ -264,6 +265,27 @@ const ArticleForm = ({ article, onClose }: ArticleFormProps) => {
     );
   };
 
+  const handleAddTag = async () => {
+    const trimmed = newTag.trim();
+    if (!trimmed) return;
+    if (tags.some(tag => tag.name.toLowerCase() === trimmed.toLowerCase())) {
+      setNewTag('');
+      return;
+    }
+    const { data, error } = await (supabase
+      .from('tags') as any)
+      .insert([{ name: trimmed }])
+      .select()
+      .single();
+    if (!error && data) {
+      setTags(prev => [...prev, data]);
+      setSelectedTags(prev => [...prev, data.id]);
+      setNewTag('');
+    } else {
+      // Optionally show a toast or error
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
@@ -346,6 +368,19 @@ const ArticleForm = ({ article, onClose }: ArticleFormProps) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={newTag}
+                    onChange={e => setNewTag(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); } }}
+                    placeholder="Add new tag"
+                    className="border rounded px-2 py-1"
+                  />
+                  <button type="button" onClick={handleAddTag} className="bg-primary text-white px-3 py-1 rounded">
+                    Add
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {tags.map((tag) => (
                     <button
