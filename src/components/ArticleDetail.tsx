@@ -5,6 +5,7 @@ import Carousel from './Carousel';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from './ui/button';
+import NewsCard from './NewsCard';
 
 interface Article {
   id: string;
@@ -35,9 +36,10 @@ const ArticleDetail = ({ article: propArticle, onBack, allArticles = [], onArtic
   const [allArticlesState, setAllArticlesState] = React.useState<Article[]>(allArticles || []);
 
   React.useEffect(() => {
-    if (!article && id) {
-      setLoading(true);
-      setError(null);
+    setArticle(null);
+    setLoading(true);
+    setError(null);
+    if (id) {
       (async () => {
         try {
           // Fetch article by id
@@ -92,7 +94,7 @@ const ArticleDetail = ({ article: propArticle, onBack, allArticles = [], onArtic
         }
       })();
     }
-  }, [id, article]);
+  }, [id]);
 
   // Fetch all articles if not provided
   React.useEffect(() => {
@@ -281,7 +283,10 @@ const ArticleDetail = ({ article: propArticle, onBack, allArticles = [], onArtic
                   {/* All News Section */}
                   <div className="mt-8">
                     <h3 className="text-lg font-semibold mb-4 text-foreground">All News</h3>
-                    <NewsGrid articles={allArticlesState} onArticleClick={onArticleClick} />
+                    <NewsGrid
+                      articles={allArticlesState}
+                      onArticleClick={onArticleClick ? onArticleClick : (article) => navigate(`/article/${article.id}`)}
+                    />
                   </div>
                 </div>
               </div>
@@ -293,16 +298,17 @@ const ArticleDetail = ({ article: propArticle, onBack, allArticles = [], onArtic
               <h2 className="text-lg font-semibold mb-4">Related News</h2>
               <div className="flex flex-col gap-4">
                 {relatedArticles.map(article => (
-                  <div key={article.id} className="cursor-pointer" onClick={() => onArticleClick ? onArticleClick(article) : navigate(`/article/${article.id}`)}>
-                    <div className="flex gap-3 items-center bg-white rounded-lg shadow p-2 hover:bg-gray-50 transition">
-                      <img src={article.imageUrl} alt={article.title} className="w-20 h-14 object-cover rounded-md flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs text-muted-foreground truncate mb-1">{article.tags[0]}</div>
-                        <div className="font-medium text-sm truncate">{article.title}</div>
-                        <div className="text-xs text-gray-400 truncate">{new Date(article.publishedAt).toLocaleDateString()}</div>
-                      </div>
-                    </div>
-                  </div>
+                  <NewsCard
+                    key={article.id}
+                    id={article.id}
+                    title={article.title}
+                    description={article.description}
+                    imageUrl={article.imageUrl}
+                    publishedAt={article.publishedAt}
+                    tags={article.tags}
+                    onClick={() => navigate(`/article/${article.id}`)}
+                    media={article.media}
+                  />
                 ))}
               </div>
             </aside>
