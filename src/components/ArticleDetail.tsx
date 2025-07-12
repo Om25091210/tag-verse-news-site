@@ -6,6 +6,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from './ui/button';
 import NewsCard from './NewsCard';
+import { Helmet } from 'react-helmet';
 
 interface Article {
   id: string;
@@ -197,6 +198,17 @@ const ArticleDetail = ({ article: propArticle, onBack, allArticles = [], onArtic
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{article.title}</title>
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={article.description} />
+        <meta property="og:image" content={article.imageUrl} />
+        <meta property="og:url" content={shareUrl} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={article.title} />
+        <meta name="twitter:description" content={article.description} />
+        <meta name="twitter:image" content={article.imageUrl} />
+      </Helmet>
       <div className="container mx-auto px-4 py-8">
         <button
           onClick={() => (onBack ? onBack() : navigate(-1))}
