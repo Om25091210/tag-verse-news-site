@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+    {
+      "source": "/share/article/:id",
+      "destination": "https://tag-verse-news-site-api.onrender.com/api/share/article/:id"
+    }
   ]
 } 

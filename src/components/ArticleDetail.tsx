@@ -33,7 +33,9 @@ const ArticleDetail = ({ article: propArticle, onBack, allArticles = [], onArtic
   const [loading, setLoading] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const shareUrl = typeof window !== 'undefined' && article ? `https://tag-verse-news-site-api.onrender.com/api/share/article/${article.id}` : '';
+  const shareUrl = typeof window !== 'undefined' && article
+    ? `https://www.highwaynews.blog/share/article/${article.id}`
+    : '';
   const [allArticlesState, setAllArticlesState] = React.useState<Article[]>(allArticles || []);
 
   React.useEffect(() => {
