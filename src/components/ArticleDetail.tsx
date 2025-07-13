@@ -33,7 +33,7 @@ const ArticleDetail = ({ article: propArticle, onBack, allArticles = [], onArtic
   const [loading, setLoading] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const shareUrl = typeof window !== 'undefined' && article ? `${window.location.origin}/article/${article.id}` : '';
+  const shareUrl = typeof window !== 'undefined' && article ? `${window.location.origin}/api/share/article/${article.id}` : '';
   const [allArticlesState, setAllArticlesState] = React.useState<Article[]>(allArticles || []);
 
   React.useEffect(() => {
