@@ -44,7 +44,7 @@ app.get('/api/share/article/:id', async (req, res) => {
         </head>
         <body>
           <script>
-            window.location.href = "/article/${article.id}";
+            window.location.href = "https://www.highwaynews.blog/article/${article.id}";
           </script>
         </body>
       </html>
