@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/share/article/:id",
-      "destination": "https://55qd3qg6ucqhkhelutauqgatgi0apdsz.lambda-url.ap-south-1.on.aws/api/share/article/:id"
+      "destination": "https://tag-verse-news-site-639527331571.asia-south1.run.app/api/share/article/:id"
     },
     {
       "source": "/(.*)",
